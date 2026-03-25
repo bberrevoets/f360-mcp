@@ -1,0 +1,13 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "addin",
+  "id": "5bd03ca4-b856-4a00-bc67-f2374335c971",
+  "author": "Berrevoets Systems",
+  "description": {
+    "": "F360 MCP Server — AI-driven Fusion 360 operations via Model Context Protocol"
+  },
+  "version": "0.1.0",
+  "runOnStartup": false,
+  "supportedOS": "windows|mac",
+  "editEnabled": true
+}
