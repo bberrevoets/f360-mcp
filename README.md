@@ -111,15 +111,48 @@ Add to your Claude Code MCP settings:
 | `undo` | Undo last operation |
 | `delete_all` | Clear all features |
 
+### MCP Resources
+
+| Resource URI | Description |
+|------|-------------|
+| `fusion360://status` | Connection status to Fusion 360 |
+| `fusion360://design` | Current design tree (JSON) |
+| `fusion360://parameters` | User parameters (JSON) |
+
 ## Development
 
-### Testing (mock mode)
+### Prerequisites
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
+- Autodesk Fusion 360 (for socket mode; not needed for mock mode)
+
+### Setup
 
 ```bash
-uvx berrevoets-f360-mcp --mode mock
+uv sync --dev
 ```
 
-### Project structure
+### Testing
+
+Tests run in mock mode — no Fusion 360 required:
+
+```bash
+# Run all tests
+pytest tests/
+
+# Run a single test
+pytest tests/test_tools.py::test_ping
+```
+
+### Linting and Type Checking
+
+```bash
+ruff check src/ tests/
+mypy src/
+```
+
+### Project Structure
 
 ```text
 src/berrevoets_f360_mcp/    # MCP server (FastMCP + tools)
