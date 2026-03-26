@@ -13,6 +13,17 @@ and this project adheres to
 - **Bert Berrevoets** — Project creator and maintainer
 - **Claude** — AI pair programmer
 
+## [Unreleased]
+
+### Added
+
+Author: *Claude*
+
+- CLAUDE.md with project guidance for Claude Code
+- MCP Resources section in README (status, design, parameters)
+- Development prerequisites, setup, linting, and testing
+  instructions in README
+
 ## [0.1.0] - 2026-03-26
 
 ### Added
