@@ -85,7 +85,7 @@ python scripts/install_addon.py
 
 Newline-delimited JSON over TCP (localhost:9876).
 
-```json
+```text
 Request:  {"type": "command_name", "params": {...}}
 Success:  {"status": "success", "result": {...}}
 Error:    {"status": "error", "message": "..."}

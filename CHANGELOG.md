@@ -23,6 +23,7 @@ Author: *Claude*
 - MCP Resources section in README (status, design, parameters)
 - Development prerequisites, setup, linting, and testing
   instructions in README
+- `*.code-workspace` to `.gitignore` (machine-specific paths)
 
 ## [0.1.0] - 2026-03-26
 
