@@ -237,10 +237,12 @@ this to rename/save an `Untitled` doc after building it via API.
 
 ### Undo is a feature-level operation, not per-sketch
 
-`app.undo()` and the `undo` MCP tool undo the **last timeline
-feature**. They don't remove sketches individually — use
-`sketch.deleteMe()` for that. Note that `deleteMe()` shifts remaining
-sketch indices, so iterate **backwards** when deleting in a loop:
+The `undo` MCP tool undoes the **last timeline feature** (implemented
+internally by invoking `commandDefinitions.itemById("UndoCommand").execute()`
+— there is no `app.undo()` method on `Application`). Undo does NOT
+remove sketches individually — use `sketch.deleteMe()` for that. Note
+that `deleteMe()` shifts remaining sketch indices, so iterate
+**backwards** when deleting in a loop:
 
 ```python
 for i in range(sketches.count - 1, -1, -1):
