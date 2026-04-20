@@ -16,10 +16,7 @@ from .tools import register_all
 
 log = logging.getLogger("berrevoets_f360_mcp.server")
 
-mcp = FastMCP(
-    "Berrevoets F360 MCP",
-    description="MCP server for Autodesk Fusion 360 — file management, export, import, and design queries",
-)
+mcp = FastMCP("Berrevoets F360 MCP")
 
 _mode = "socket"
 _port = DEFAULT_PORT

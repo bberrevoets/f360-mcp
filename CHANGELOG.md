@@ -25,6 +25,14 @@ Author: *Claude*
   instructions in README
 - `*.code-workspace` to `.gitignore` (machine-specific paths)
 
+### Fixed
+
+Author: *Claude*
+
+- Compatibility with FastMCP v3 — removed the `description=`
+  kwarg from `FastMCP()` constructor (removed upstream in v3).
+  Server now starts cleanly with `fastmcp>=3.0`
+
 ## [0.1.0] - 2026-03-26
 
 ### Added
