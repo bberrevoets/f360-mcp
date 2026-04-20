@@ -115,3 +115,148 @@ Error:    {"status": "error", "message": "..."}
 Tests run in mock mode only — no Fusion 360 required. The test file
 (`tests/test_tools.py`) imports `mock_send` directly and validates response
 structure for all tools. There are currently 21 test cases.
+
+## Fusion 360 Python API — Lessons Learned
+
+Practical gotchas encountered while using `execute_code` against the
+Fusion API. Useful when writing new handler tools or helping users via
+`execute_code`.
+
+### Text engraving via `SketchText`
+
+**Don't** iterate `sketch.profiles` after adding a `SketchText` — the
+profiles you get back are the **projected boundaries of the sketch's
+host face** (outer outline + any holes), NOT the text glyphs. Extruding
+those profiles cuts the whole face and removes far too much material.
+
+**Do** pass the `SketchText` object **directly** to
+`extrudes.createInput()`:
+
+```python
+ti = sk.sketchTexts.createInput2('Berrevoets Systems', 0.35)
+ti.setAsMultiLine(p1, p2, hAlign, vAlign, 0)
+text = sk.sketchTexts.add(ti)
+
+# Pass the SketchText itself — not sk.profiles
+ei = extrudes.createInput(text, adsk.fusion.FeatureOperations.CutFeatureOperation)
+ei.setDistanceExtent(False, adsk.core.ValueInput.createByReal(-0.03))  # 0.3mm
+extrudes.add(ei)
+```
+
+`createInput` accepts `Profile`, `ObjectCollection of Profile`, or
+`SketchText` — the last one is the right choice for text engraving.
+
+### Threads have a minimum length
+
+`ThreadFeatures.add()` raises `RuntimeError: 3 : invalid input thread
+length` if the threaded cylindrical face is too short. M6×1 internal
+needs ≥ 2 mm of cylinder. Plan hole depth / countersink depth so enough
+straight cylinder remains.
+
+### Countersink via tapered extrude-cut
+
+Simple approach:
+
+1. Create an offset plane at the top face of the body.
+2. Sketch circles with the **top diameter** of the countersink.
+3. `extrudeInput.taperAngle = ValueInput.createByString("-45 deg")`
+4. `setDistanceExtent(False, -depth)` — negative distance goes into
+   the body from the offset plane.
+
+Negative taper + negative distance: profile **shrinks** as the cut goes
+into the material, producing a cone wider at the top.
+
+Verified: top_r=5mm, depth=2mm, taper=-45° → 90° included angle
+countersink ending at 3mm radius (matches an M6 hole).
+
+Starting the sketch on the pre-drilled hole edge (profile radius =
+hole radius) triggers `No target body found to cut or intersect!` —
+offset the sketch above the top face instead.
+
+### `ThreadFeatures` API — createThreadInfo signature
+
+Working call for modeled M6×1 internal threads:
+
+```python
+thread_info = threads.createThreadInfo(
+    True,                    # isInternal
+    'ISO Metric profile',    # threadType
+    'M6x1',                  # threadDesignation
+    '6H')                    # threadClass
+
+ti = threads.createInput(faces_collection, thread_info)
+ti.isModeled = True          # True = visible helical geometry
+# Omit ti.threadLength to use the full face length (safer than guessing)
+threads.add(ti)
+```
+
+### Cylindrical face discovery
+
+`face.geometry.objectType` returns `adsk::core::Cylinder::classType()`
+(use the full class type, not the simple name) when the face is a
+cylinder. Filter by radius AND origin position to distinguish bolt
+holes from the center bore.
+
+```python
+for face in body.faces:
+    g = face.geometry
+    if g and g.objectType == adsk.core.Cylinder.classType():
+        if abs(g.radius - BOLT_R) < 1e-3:
+            ...
+```
+
+### Top face detection
+
+To find the "+Z face" of a body with multiple planar faces:
+
+```python
+for face in body.faces:
+    g = face.geometry
+    if g and g.objectType == adsk.core.Plane.classType():
+        eval_ = face.evaluator
+        ok, normal = eval_.getNormalAtPoint(face.pointOnFace)
+        if ok and normal.z > 0.99:
+            # top face; pick the largest if multiple
+            ...
+```
+
+Chamfered/filleted bodies have multiple near-horizontal faces —
+always pick the one with the **largest area**.
+
+### Save active document programmatically
+
+```python
+hub = app.data.activeHub
+project = app.data.activeProject
+root_folder = project.rootFolder
+app.activeDocument.saveAs("Test Piece", root_folder, "description", "")
+```
+
+Returns `True` on success. This does NOT trigger a UI dialog. Use
+this to rename/save an `Untitled` doc after building it via API.
+
+### Undo is a feature-level operation, not per-sketch
+
+`app.undo()` and the `undo` MCP tool undo the **last timeline
+feature**. They don't remove sketches individually — use
+`sketch.deleteMe()` for that. Note that `deleteMe()` shifts remaining
+sketch indices, so iterate **backwards** when deleting in a loop:
+
+```python
+for i in range(sketches.count - 1, -1, -1):
+    if should_delete(sketches.item(i)):
+        sketches.item(i).deleteMe()
+```
+
+### Do NOT create or close documents via `execute_code`
+
+Bricks the MCP connection. `saveAs` on the active document is fine;
+creating a new document or closing the active one via Python triggers
+UI state the add-in's event bridge cannot recover from.
+
+### `execute_code` variables don't persist across calls
+
+Each call is a fresh Python scope. Pre-defined variables (`app`,
+`ui`, `design`, `component`, `adsk`, `math`) are always available but
+anything you assign inside one call is gone by the next. Re-fetch
+bodies, sketches, etc. by name every time.

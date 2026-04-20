@@ -24,6 +24,13 @@ Author: *Claude*
 - Development prerequisites, setup, linting, and testing
   instructions in README
 - `*.code-workspace` to `.gitignore` (machine-specific paths)
+- **Fusion 360 API Lessons Learned** section in CLAUDE.md
+  covering: text engraving via SketchText (pass directly to
+  extrude, not via profiles), minimum thread length, countersink
+  via tapered extrude-cut, ThreadFeatures.createThreadInfo
+  signature, cylindrical face discovery, top face detection,
+  programmatic saveAs, backward-iteration for sketch deletion,
+  and the "don't create/close documents" rule
 
 ### Fixed
 
